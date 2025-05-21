@@ -1,10 +1,10 @@
-# 🇰🇷 Policy LLM Fine-Tuning with LoRA (Polyglot-ko-1.3B)
+# 🇰🇷 Fine-Tuning a Korean Policy Domain LLM with LoRA (Polyglot-ko-1.3B)
 
-이 프로젝트는 한국의 국가 과학기술 정책 언어에 특화된 질의응답 언어모델을 개발하기 위해, Polyglot-ko-1.3B 모델을 기반으로 **LoRA (Low-Rank Adaptation)** 파인튜닝 기법을 적용한 실험입니다. 학습 데이터는 「제3차 국가초고성능컴퓨팅 육성 기본계획 (2023~2027)」 문서를 instruction 형식으로 가공하여 구성되었으며, 파인튜닝 이후 BLEU, ROUGE, 정책 키워드 반영률 등 다양한 관점에서 성능을 평가하였습니다.
+This project fine-tunes a Korean language model for national science and technology policy question answering (QA) tasks using **LoRA (Low-Rank Adaptation)**. We utilize the publicly available base model `EleutherAI/polyglot-ko-1.3b` and train it on instruction-style data derived from an official government policy document. Evaluation includes BLEU/ROUGE metrics, domain-specific keyword coverage, and qualitative error analysis.
 
 ---
 
-## 📁 디렉토리 구조
+## 📁 Project Structure
 
 policy-llm-lora-finetuning/
 │
@@ -12,21 +12,21 @@ policy-llm-lora-finetuning/
 ├── requirements.txt
 │
 ├── data/
-│ ├── raw/ # 원본 정책 문서
-│ └── processed/ # 전처리된 instruction 포맷 학습 데이터
+│ ├── raw/ # Original policy text source
+│ └── processed/ # Instruction-format training data
 │
 ├── src/
-│ ├── prepare_dataset.py # 데이터 전처리 스크립트
-│ ├── run_finetune.py # LoRA 기반 파인튜닝 실행 스크립트
-│ ├── eval_compare.py # 튜닝 전후 응답 평가 스크립트
-│ └── config/ # (옵션) 설정 json 파일 등
+│ ├── prepare_dataset.py # Data preprocessing script
+│ ├── run_finetune.py # LoRA fine-tuning training script
+│ ├── eval_compare.py # Evaluation: pre/post-tuning comparison
+│ └── config/ # (Optional) config files
 │
 ├── outputs/
-│ ├── koni-lora-checkpoint/ # 학습된 adapter 결과
-│ └── response_outputs/ # 튜닝 전후 결과 파일
+│ ├── koni-lora-checkpoint/ # Trained LoRA adapter results
+│ └── response_outputs/ # Model answer outputs before/after tuning
 │
 └── notebooks/
-└── exploratory_analysis.ipynb # 정량 및 정성 평가 노트북
+└── exploratory_analysis.ipynb # Metric comparison and QA analysis
 
 yaml
 복사
@@ -34,19 +34,19 @@ yaml
 
 ---
 
-## 🚀 코드 실행 예시
+## 🚀 How to Run
 
-### 1. 의존성 설치
+### 1. Install dependencies
 ```bash
 pip install -r requirements.txt
-2. 데이터 전처리
+2. Preprocess raw policy data
 bash
 복사
 편집
 python src/prepare_dataset.py \
   --input data/raw/policy_source.txt \
   --output data/processed/koni_finetune_sntp_sample.csv
-3. LoRA 기반 파인튜닝 실행
+3. Run LoRA fine-tuning
 bash
 복사
 편집
@@ -54,42 +54,49 @@ python src/run_finetune.py \
   --base_model EleutherAI/polyglot-ko-1.3b \
   --data_path data/processed/koni_finetune_sntp_sample.csv \
   --output_dir outputs/koni-lora-checkpoint
-4. 튜닝 전후 응답 비교 및 평가
+4. Compare QA results (before/after fine-tuning)
 bash
 복사
 편집
 python src/eval_compare.py \
   --questions_file data/processed/eval_questions.txt \
   --model_paths EleutherAI/polyglot-ko-1.3b outputs/koni-lora-checkpoint
-🧾 데이터 출처
-학습 데이터는 「제3차 국가초고성능컴퓨팅 육성 기본계획(2023~2027)」 원문을 기반으로 수작업으로 instruction 형식 (instruction, input, output)으로 가공하였습니다.
+🧾 Data Source
+The training data is derived from the 3rd National Basic Plan for Supercomputing Development in Korea (2023–2027).
 
-해당 문서는 과학기술정보통신부가 공개한 공공 정책 문서로, 출처는 국가과학기술지식정보서비스(NTIS) 등에서 확인할 수 있습니다.
+Original source: Ministry of Science and ICT (MSIT), Korea. Available via public policy portals such as NTIS.
 
-평가용 질문은 실제 과학기술 정책 영역에서 자주 등장하는 핵심 쟁점을 바탕으로 구성되었습니다.
+Instruction-format dataset was created manually with structured instruction, input, and output fields.
 
-🧠 사용 모델 정보
-항목	정보
-기반 모델	EleutherAI/polyglot-ko-1.3b
-튜닝 기법	LoRA (Low-Rank Adaptation) with Huggingface PEFT
-학습 환경	Google Colab (T4 / A100 GPU 환경)
-튜닝 목적	정책 질의응답의 정보 반영력 및 언어 품질 향상
-출력 형식	adapter_config.json, adapter_model.safetensors
+Evaluation questions reflect key issues and topics frequently discussed in Korean science and technology policy.
 
-📊 평가 지표
-BLEU / ROUGE-L: 정책 응답 정량적 정확도
+🧠 Model Details
+Component	Information
+Base Model	EleutherAI/polyglot-ko-1.3b
+Tuning Method	LoRA (Low-Rank Adaptation) using Huggingface PEFT
+Training Environment	Google Colab (GPU T4 / A100)
+Output Format	adapter_config.json, adapter_model.safetensors
+Objective	Enhance QA relevance and policy-specific fluency for Korean government text
 
-정성 평가: 오류 유형 분류 (정보 누락, 정책 기관 오용 등)
+📊 Evaluation Criteria
+BLEU / ROUGE-L: Quantitative similarity to reference answers
 
-정책 키워드 반영률: 핵심 용어 포함 비율
+Qualitative Error Typology: Information omission, incorrect institutions, incomplete reasoning
 
-질문 유형별 성능 비교: 법령/기관/산업/추론 등 분류 기준에 따른 성능 변화
+Policy Keyword Coverage: Ratio of domain-specific terms in generated responses
 
-📚 참고 문헌
+By Question Type: Performance categorized by law, institution, policy concept, inference, basic/applied research
+
+📚 References
 Hu et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models
 
 Caudron et al. (2024). Adaptation of LLMs for the Public Sector
 
-Ren et al. (2025). AT-RAFT for Research Policy Interpretation
+Ren et al. (2025). AT-RAFT: Retrieval-Augmented Fine-Tuning for Research Policy Interpretation
 
-Sun et al. (2024). Instruction-Tuning for Policy Text Classification
+Sun et al. (2024). Instruction-Tuned Policy Text Classification
+
+🔓 License
+MIT License
+
+This repository is provided for academic research and reproducibility. For any commercial usage or adaptation of the model and data, please contact the author.
